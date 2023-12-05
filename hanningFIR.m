@@ -59,7 +59,6 @@ ylabel('幅度谱');
 grid on;
 
 % 计算汉宁窗所需要的参数
-
 fp=1110;fs=950;%通带和阻带截止频率
 Rp=1;As=43.9;%通带和阻带衰减
 fcd=(fp+fs)/2;% 高通滤波器设计指标，截止频率
@@ -67,5 +66,93 @@ df=fp-fs;  % 计算频率间隔
 wc=fcd/Fs*2*pi;% 截止频率(弧度) 
 dw=df/Fs*2*pi;  
 wsd=fs/Fs*2*pi;
-M=ceil(6.2*pi/dw)+1          % 计算汉宁窗设计该滤波器时需要的阶数
+M=ceil(6.2*pi/dw)+1;          % 计算汉宁窗设计该滤波器时需要的阶数
+
+n=0:M-1;       % 定义时间范围            
+w_ham=hann(M);     % 产生M阶的汉宁窗       
+ 
+ 
+% M = 理想滤波器的长度
+alpha = (M-1)/2;
+n = 0:1:(M-1);
+m = n - alpha + eps;
+hd_bs=(sin(pi*m) - sin(wc*m))./(pi*m);
+ 
+%%%%滤波器的形成
+h_bs=w_ham'.*hd_bs;               % 用窗口法计算实际滤波器脉冲响应
+[H,w] = freqz(h_bs,1,1000,'whole');
+H = (H(1:1:501))'; 
+w = (w(1:1:501))';
+mag = abs(H);
+db = 20*log10((mag+eps)/max(mag));
+pha = angle(H);
+grd = grpdelay(h_bs,1,w);
+	
+% % % % 滤波器的性能指标
+figure(2)
+subplot(2,2,1);plot(w*Fs/(2*pi),db);
+axis([0,1800,-120,20]);
+title('幅度特性（db）');
+xlabel('f（Hz）');ylabel('db'); 
+grid on;
+
+subplot(2,2,2);plot(w*Fs/(2*pi),mag);
+axis([0,3900,-0.5,1.5]);
+title('幅度特性曲线（Hz）');
+xlabel('f（Hz）');ylabel('幅度');
+grid on;
+
+subplot(2,2,3);plot(w,pha);
+axis([0,0.2,-3,3])
+title('滤波器相频特性图');
+xlabel('w/pi');ylabel('相位');
+grid on;
+
+subplot(2,2,4);plot(h_bs);
+axis([250,600,-0.2,0.2]);
+title('滤波器脉冲响应图');
+xlabel('n');ylabel('h(n)');
+grid on;   
+
+
+%%%%开始滤波
+y_fil=filter(h_bs,1,y);% 用设计好的滤波器对y进行滤波
+Y_fil=fft(y_fil);Y_fil=Y_fil(1:N/2); % 计算频谱取前一半
+% % % 检验滤波
+figure(3)
+subplot(3,2,1);plot(t,x); 
+title('原音频信号时域');
+xlabel('时间t');ylabel('幅度');
+grid on;
+subplot(3,2,2);plot(f,X);
+axis([0,1500,0,3000]);
+title('原音频信号幅度谱');
+xlabel('频率f');ylabel('幅度');
+grid on;
+subplot(3,2,3);plot(t,y);
+% axis([0,2.1,-0.05,0.1]);
+title('加噪声后的音频信号时域');
+xlabel('时间t');ylabel('幅度');
+grid on;
+subplot(3,2,4);plot(f,Y);
+axis([0,1500,0,3000]);
+title('加噪声后的音频信号幅度谱');
+xlabel('频率f');ylabel('幅度');
+grid on;
+subplot(3,2,5);plot(t,y_fil);
+% axis([0,2.1,-0.05,0.1]);
+title('滤波后音频信号时域');
+xlabel('时间t');ylabel('幅度');
+grid on;
+sound(y_fil,Fs)
+subplot(3,2,6);plot(f,Y_fil);
+axis([0,1500,0,3000]);
+title('滤波后音频信号幅度谱');
+xlabel('频率f');ylabel('幅度');
+grid on;
+figure(4)
+zplane(h_bs,1);
+xlabel('rez'); ylabel('jImz');
+title('传输零极点');
+
 
