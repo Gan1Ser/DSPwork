@@ -5,12 +5,18 @@ sound(x,Fs);
 pause(7);
 
 % 原始信号初始分析
-N=length(x);   % 计算信号x的长度
+N=length(x)   % 计算信号x的长度
+bbb = 2^nextpow2(N)
 t=0:1/Fs:(N-1)/Fs; % 计算时间范围，样本数除以采样频率
 X=abs(fft(x));
+p0 = pow2db(abs(X(1:bbb/2)) .^ 2);  % 功率（只取正频部分）
+f0 = (0 : bbb/2-1) / bbb * fs;  % 频率（只取正频部分）
 X=X(1:N/2); 
 df=Fs/ N;        % 计算频谱的谱线间隔
 f=0:df:Fs/2-df;         % 计算频谱频率范围
+
+
+
 
 subplot(2,2,1);
 plot(t,x);  
@@ -59,14 +65,14 @@ ylabel('幅度谱');
 grid on;
 
 % 计算汉宁窗所需要的参数
-fp=1100;fs=1020;%通带和阻带截止频率
+fp=1110;fs=1000;%通带和阻带截止频率
 Rp=1;As=43.9;%通带和阻带衰减
 fcd=(fp+fs)/2;% 高通滤波器设计指标，截止频率
 df=fp-fs;  % 计算频率间隔
 wc=fcd/Fs*2*pi;% 截止频率(弧度) 
 dw=df/Fs*2*pi;  
 wsd=fs/Fs*2*pi;
-M=ceil(6.2*pi/dw)+1          % 计算汉宁窗设计该滤波器时需要的阶数
+M=ceil(6.2*pi/dw)+1;          % 计算汉宁窗设计该滤波器时需要的阶数
 
 n=0:M-1;       % 定义时间范围            
 w_ham=hann(M);     % 产生M阶的汉宁窗       
